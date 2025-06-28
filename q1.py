@@ -35,5 +35,24 @@ def FIFO(frame_quantity):
                         memory.pop(0)
                     memory.append(page)
    
-def Aging(frame_quantity):
-    pass
+def aging(reference_string, num_frames, bits=8):
+    memory = {}
+    counters = {}
+    page_faults = 0
+
+    for page in reference_string:
+        for p in counters:
+            counters[p] >>= 1
+        if page in memory:
+            counters[page] |= 1 << (bits - 1)
+        else:
+            page_faults += 1
+            if len(memory) >= num_frames:
+                to_remove = min(counters, key=lambda k: counters[k])
+                del memory[to_remove]
+                del counters[to_remove]
+            memory[page] = True
+            counters[page] = 1 << (bits - 1)
+
+    return page_faults
+
