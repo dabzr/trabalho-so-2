@@ -1,16 +1,18 @@
 from random import choice, choices, randint, sample
 
 class Process:
-    def __init__(self, working_sets: zip) -> None:
+    def __init__(self, pid: int, working_sets: zip) -> None:
+        self.pid = pid
         self.working_sets = working_sets
 
 PAGE_QUANTITY = 15
 PROCESS_QUANTITY = 50
 WORKING_SET_MAX_DURATION = 50
 WORKING_SET_MAX = 20
+
 def create_processes(page_quantity=PAGE_QUANTITY, process_quantity=PROCESS_QUANTITY):
     processes = []
-    for _ in range(process_quantity):
+    for pid in range(process_quantity):
         working_set_quantity = randint(1, WORKING_SET_MAX)
         working_sets = []
         for _ in range(working_set_quantity):
@@ -18,7 +20,7 @@ def create_processes(page_quantity=PAGE_QUANTITY, process_quantity=PROCESS_QUANT
             working_sets.append(accessed_pages)
         durations = list(map(lambda _: randint(1, WORKING_SET_MAX_DURATION), working_sets))
         working_sets = zip(working_sets, durations)
-        processes.append(Process(working_sets))
+        processes.append(Process(pid, working_sets))
     return processes
 
 def FIFO(frame_quantity):
@@ -61,3 +63,4 @@ def aging(frame_quantity, decay_factor=0.5, ref_boost=1.0):
                 scores[page] = scores.get(page, 0) + ref_boost
 
     return page_faults
+
