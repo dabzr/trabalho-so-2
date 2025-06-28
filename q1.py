@@ -26,7 +26,7 @@ def FIFO(frame_quantity):
             if page not in memory:
                 count_page_fault+=1
                 if len(memory) >= frame_quantity:
-                    memory.pop()
+                    memory.pop(0)
                 memory.append(page)
     
 def Aging(frame_quantity):
