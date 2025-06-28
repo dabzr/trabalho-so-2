@@ -1,9 +1,11 @@
-from random import choice, choices, randint, sample
+from typing import List
+from datetime import datetime
+from random import choices, randint, sample
 
 class Process:
-    def __init__(self, pid: int, working_sets: zip) -> None:
+    def __init__(self, pid: int, references: List[List[int]]) -> None:
         self.pid = pid
-        self.working_sets = working_sets
+        self.references = references
 
 PAGE_QUANTITY = 15
 PROCESS_QUANTITY = 50
@@ -19,18 +21,17 @@ def create_processes(page_quantity=PAGE_QUANTITY, process_quantity=PROCESS_QUANT
             accessed_pages = sample(list(range(1, page_quantity)), randint(1, page_quantity - 1)) # ESCOLHE N ELEMENTOS ALEATÓRIOS ÚNICOS
             working_sets.append(accessed_pages)
         durations = list(map(lambda _: randint(1, WORKING_SET_MAX_DURATION), working_sets))
-        working_sets = zip(working_sets, durations)
-        processes.append(Process(pid, working_sets))
+        references = list(map(lambda ws: choices(ws[0], k=ws[1]), zip(working_sets, durations)))
+        processes.append(Process(pid, references))
     return processes
 
-def FIFO(frame_quantity):
+def FIFO(processes, frame_quantity):
     memory = []
     count_page_fault = 0
-    processes = create_processes()
+
     for process in processes:
-        for working_set, duration in process.working_sets:
-            accessed_pages = choices(working_set, k=duration) # ESCOLHE K ELEMENTOS ALEATÓRIOS QUE PODEM REPETIR
-            for page in accessed_pages:
+        for reference_list in process.references:
+            for page in reference_list:
                 if page not in memory:
                     count_page_fault+=1
                     if len(memory) >= frame_quantity:
@@ -39,16 +40,14 @@ def FIFO(frame_quantity):
 
     return count_page_fault
    
-def aging(frame_quantity, decay_factor=0.5, ref_boost=1.0):
+def aging(processes, frame_quantity, decay_factor=0.5, ref_boost=1.0):
     memory = {}
     scores = {}
     page_faults = 0
-    processes = create_processes()
 
     for process in processes:
-        for working_set, duration in process.working_sets:
-            accessed_pages = choices(working_set, k=duration)
-            for page in accessed_pages:
+        for reference_list in process.references:
+            for page in reference_list:
                 for p in scores:
                     scores[p] *= decay_factor
 
@@ -64,3 +63,17 @@ def aging(frame_quantity, decay_factor=0.5, ref_boost=1.0):
 
     return page_faults
 
+def total_references(processes):
+    return sum(map(lambda p: sum(map(len, p.references)), processes))
+
+def save_references(processes):
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
+    filename = f"refs_{timestamp}.txt"
+
+    with open(filename, "w") as f:
+        for process in processes:
+            f.write(f"Process #{process.pid}: \n")
+            for i, refs in enumerate(process.references):
+                f.write(f"WS #{i}: {refs} \n")
+            f.write("\n")
