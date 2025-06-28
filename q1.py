@@ -1,3 +1,4 @@
+import os
 from typing import List
 from datetime import datetime
 from random import choices, randint, sample
@@ -69,11 +70,24 @@ def total_references(processes):
 def save_references(processes):
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
-    filename = f"refs_{timestamp}.txt"
+
+    output_dir = "refs"
+    os.makedirs(output_dir, exist_ok=True)
+
+    base_name = f"refs_{timestamp}.txt"
+    filename = os.path.join(output_dir, base_name)
+
+    counter = 1
+    while os.path.exists(filename):
+        new_name = f"refs_{timestamp}_{counter}.txt"
+        filename = os.path.join(output_dir, new_name)
+        counter += 1
 
     with open(filename, "w") as f:
         for process in processes:
-            f.write(f"Process #{process.pid}: \n")
+            f.write(f"Process #{process.pid}:\n")
             for ref in process.references:
                 f.write(f"{ref}\n")
             f.write("\n")
+
+    print(f"{filename} created.")
